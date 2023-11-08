@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Error</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="{{ url_for('static', filename='whatsapp_logo.png') }}" alt="WhatsApp Logo">
+      <h1>WhatsApp Web - Error</h1>
+    </div>
+    <div class="error-message">
+      <h2>Oops! Something went wrong.</h2>
+      <p>Unable to read the QR code. Please try again.</p>
+    </div>
+    <div class="actions">
+      <button class="button" onclick="goBack()">Try Again</button>
+    </div>
+  </div>
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Web</title>
+<link rel="stylesheet" href="{{url_for('static', filename='bootstrap.css')}}">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="{{url_for('static', filename='whatsapp_logo.png')}}" alt="WhatsApp Logo">
+      <h1>WhatsApp Web</h1>
+    </div>
+    <div class="qr-code">
+      <img src="{{url_for('static', filename='qr_code.png')}}" alt="QR Code">
+    </div>
+    <div class="instructions">
+      <p>Use WhatsApp on your computer</p>
+      <ol>
+        <li>Open WhatsApp on your phone</li>
+        <li>Go to settings by tapping on your profile photo, Menu, or Settings</li>
+        <li>Tap Linked devices and then Link a device</li>
+        <li>Point your phone to this screen to capture the QR code</li>
+      </ol>
+    </div>
+    <button class="button">Get the app</button>
+  </div>
+</body>
+</html>
