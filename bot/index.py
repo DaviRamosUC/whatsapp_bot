@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
 import qrcode
 import requests
-import time
+import random
 import threading
 import pika
 import json
@@ -53,8 +53,23 @@ def index():
 def rabbitmq_consumer():
     def callback(ch, method, properties, body):
         message = json.loads(body)
-        print("Mensagem recebida do RabbitMQ: ", message)
-        # Aqui você pode adicionar a lógica para processar a mensagem e responder
+        message_body = message.get('body', None)  # O método .get evita erros se a chave 'body' não existir
+        nome_contato = message.get('notifyName', None)
+        saudacoes = [f'Olá {nome_contato}, tudo bem?', f'Oi {nome_contato}, como vai você?', f'Opa {nome_contato}, tudo certo?']
+        saudacao = random.choice(saudacoes)
+        response = ''
+        if message_body is not None:
+            print("Conteúdo do body: ", message)
+            if message_body != None and message_body != '':
+                response = f'{saudacao} Esse é um atendimento automático, e não é monitorado por um humano. Caso queira falar com um atendente, escolha a opção 4. \r\n\r\nEscolha uma das opções abaixo para iniciarmos a nossa conversa: \r\n\r\n*[ \pergunta ]* - Quero fazer uma pergunta ao bot. \r\n*[ \imagem ]* - Quero gerar uma imagem seguindo meus parâmetros \r\n*[ \sobre ]*- Quero saber mais sobre as tecnologias desse projeto \r\n*[ \humano ]- Gostaria de falar com o Davizinho, mas obrigado por tentar me ajudar.* \r\n*[ \pix ]*- Quero contribuir com o lanche da tarde dos crias.\r\n*[ \\nota ]*- Quero atribuir uma nota a este serviço.\r\n*[ \empresa ]*- Gostaria de desenvolver o meu bot empresarial.  \r\n*[ \\fisk ]*- In *ENGLISH* please! \r\n*[ \hermanos ]*- En *ESPAÑOL* por favor.'
+        
+            # Publicar a resposta na fila 'responses' usando o mesmo canal
+            ch.queue_declare(queue='responses', durable=False)
+            ch.basic_publish(exchange='', routing_key='responses', body=json.dumps(response))
+        
+            print("Resposta enviada para a fila 'responses'")
+        else:
+            print("A chave 'body' não existe na mensagem recebida")
 
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()

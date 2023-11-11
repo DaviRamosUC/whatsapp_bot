@@ -265,25 +265,23 @@ async function connectRabbitMQ() {
     const connection = await amqp.connect('amqp://localhost');
     const channel = await connection.createChannel();
     await channel.assertQueue('messages');
+
+    // Declara a fila de respostas
+    const responseQueue = 'responses';
+    await channel.assertQueue(responseQueue, { durable: false });
     
     client.on('message', async msg => {
-      // const nomeContato = msg._data.notifyName;
-      // let groupChat = await msg.getChat();
-      
-      // // if (groupChat.isGroup) return null;
-    
-      // if (msg.type.toLowerCase() == "e2e_notification") return null;
-      
-      // if (msg.body == "") return null;
-      
-      // if (msg.from.includes("@g.us")) return null;
-      
-      // delay(8000).then(async function() {
-      //   const saudacaoes = ['Olá ' + nomeContato + ', tudo bem?', 'Oi ' + nomeContato + ', como vai você?', 'Opa ' + nomeContato + ', tudo certo?'];
-      //   const saudacao = saudacaoes[Math.floor(Math.random() * saudacaoes.length)];
-      //   msg.reply(saudacao + " Esse é um atendimento automático, e não é monitorado por um humano. Caso queira falar com um atendente, escolha a opção 4. \r\n\r\nEscolha uma das opções abaixo para iniciarmos a nossa conversa: \r\n\r\n*[ 1 ]* - Quero garantir minha vaga na Comunidade ZDG. \r\n*[ 2 ]* - O que vou receber entrando para a turma da ZDG? \r\n*[ 3 ]*- Quais tecnologias e ferramentas eu vou aprender na comunidade ZDG? \r\n*[ 4 ]- Gostaria de falar com o Pedrinho, mas obrigado por tentar me ajudar.* \r\n*[ 5 ]*- Quero aprender como montar minha API de GRAÇA.\r\n*[ 6 ]*- Quero conhecer todo o conteúdo programático da Comunidade ZDG.\r\n*[ 7 ]*- Gostaria de conhecer alguns estudos de caso.  \r\n*[ 8 ]*- In *ENGLISH* please! \r\n*[ 16 ]*- En *ESPAÑOL* por favor.");
-      // });
+
       channel.sendToQueue('messages', Buffer.from(JSON.stringify(msg)));
+      
+      // Consumidor para receber respostas
+      channel.consume(responseQueue, (mensagem) => {
+        if (mensagem && mensagem.content.toString != ''){
+          console.log("Resposta recebida: " + JSON.stringify(mensagem.content));
+          msg.reply(mensagem.content.toString());
+        } 
+      }, { noAck: true });
+
     });
 }
 
