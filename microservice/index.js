@@ -8,12 +8,6 @@ const port = process.env.PORT || 8000;
 const app = express();
 const server = http.createServer(app);
 
-function delay(t, v) {
-  return new Promise(function(resolve) { 
-      setTimeout(resolve.bind(null, v), t)
-  });
-}
-
 app.use(express.json());
 app.use(express.urlencoded({
 extended: true
@@ -203,20 +197,18 @@ app.post('/send-media', [
   }
 });
 
-const client = new Client({
-  authStrategy: new LocalAuth({ clientId: 'bot-zdg' }),
-  puppeteer: { headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process', // <- this one doesn't works in Windows
-      '--disable-gpu'
-    ] }
+const client = new Client({    
+  puppeteer: {
+      args: ['--no-sandbox']
+  }
 });
+
+// const client = new Client({
+//   authStrategy: new LocalAuth({ clientId: 'bot-zdg' }),
+//   puppeteer: { headless: true,
+//     executablePath: '/usr/bin/chromium',
+//     args: ['--no-sandbox'] }
+// });
 
 client.initialize();
 
@@ -262,7 +254,7 @@ app.get('/qr-code', (req, res) => {
 });
 
 async function connectRabbitMQ() {
-    const connection = await amqp.connect('amqp://localhost');
+    const connection = await amqp.connect('amqp://rabbitmq');
     const channel = await connection.createChannel();
     await channel.assertQueue('messages');
 

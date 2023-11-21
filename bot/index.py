@@ -21,14 +21,14 @@ global_fisk = False
 # Function to make a GET request and fetch the QR code content
 def fetch_qr_content():
     while True:
-        response = requests.get("http://localhost:8000/status")
+        response = requests.get("http://micro_whatsapp:8000/status")
         if response.status_code == 200:
             status_data = response.json()
             if status_data.get("status") == 1:
                 break
         time.sleep(10)  # Intervalo entre as requisições
 
-    response = requests.get("http://localhost:8000/qr-code")
+    response = requests.get("http://micro_whatsapp:8000/qr-code")
     if response.status_code == 200:
         data = response.json()
         if data.get("status") == "successo":
@@ -143,13 +143,13 @@ def rabbitmq_consumer():
         node_url = ''
         if url == '':
             data = {'number': number, 'message': message}
-            node_url = 'http://localhost:8000/send_message'
+            node_url = 'http://micro_whatsapp:8000/send_message'
         else:
             if message != '':
                 data = {'number': number, 'file': url, 'caption': message}
             else:
                 data = {'number': number, 'file': url, 'caption': 'Imagem gerada por IA'}
-            node_url = 'http://localhost:8000/send-media'
+            node_url = 'http://micro_whatsapp:8000/send-media'
         # Enviar requisição para a API Node
         try:
             response = requests.post(node_url, json=data)
@@ -198,7 +198,7 @@ def rabbitmq_consumer():
         except Exception as e:
             return str(e)
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
     channel = connection.channel()
 
     channel.queue_declare(queue='messages', durable=True)
@@ -212,4 +212,4 @@ if __name__ == '__main__':
     # Iniciando o consumidor RabbitMQ em uma thread separada
     threading.Thread(target=rabbitmq_consumer).start()
 
-    app.run(debug=True, use_reloader=False)  # use_reloader=False para evitar duplicação do job com o reloader do Flask
+    app.run(debug=True, use_reloader=False, host='0.0.0.0')  # use_reloader=False para evitar duplicação do job com o reloader do Flask

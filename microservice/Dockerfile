@@ -1,17 +1,22 @@
-# Escolha a imagem base
 FROM node:14
+
+# Instale as dependências necessárias para o Puppeteer
+RUN apt-get update && apt-get install -y \
+    libgbm-dev \
+    libxss1 \
+    libasound2 \
+    libgtk-3-0 \
+    libnss3 \
+    chromium
 
 # Defina o diretório de trabalho no contêiner
 WORKDIR /usr/src/app
 
 # Copie os arquivos do projeto para o contêiner
-COPY package*.json ./
+COPY . .
 
 # Instale as dependências
 RUN npm install
-
-# Copie todos os arquivos do projeto para o diretório de trabalho
-COPY . .
 
 # Expõe a porta que seu app usa
 EXPOSE 8000
