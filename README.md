@@ -2,6 +2,11 @@
 
 Trabalho apresentado ao curso de Engenharia de Software da Universidade de Vassouras, Câmpus Maricá, como parte dos requisitos para formação na matéria de Gestão da Manutenção e Evolução de Software. 
 
+## Estrategia de refatoração
+
+Baseado no projeto fornecido pelo professor Marcio Garrido no repositório [Github](https://github.com/marciogarridoLaCop/gmes_refatoracao), foi realizado uma conteinerização do projeto, limpando o máximo possível da sua implementação e deixando apenas os endpoints que seriam utilizados. Após ter o docker da aplicação, foi implantado o serviço de mensageria do Rabbitmq para servir de ponte para o projeto Python.
+Logo depois foi criado o microserviço bot que é responsável por realizar todo o processamento da informação obtida pelo node.
+
 ## Pré-requisitos
 
 Antes de começar, você vai precisar ter instalado em sua máquina as seguintes ferramentas:
