@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 
 global_menuVez = ''
+global_global_lang = ''
 global_hermanos = False
 global_fisk = False
 # Function to make a GET request and fetch the QR code content
@@ -62,7 +63,7 @@ def index():
 
 def rabbitmq_consumer():
     def callback(ch, method, properties, body):
-        global global_menuVez, global_hermanos, global_fisk
+        global global_menuVez, global_hermanos, global_fisk, global_lang
         message = json.loads(body)
         message_body = message.get('body', None)  # O método .get evita erros se a chave 'body' não existir
         data = message.get('_data', {}) # Acessando _data primeiro
@@ -70,10 +71,9 @@ def rabbitmq_consumer():
         number = data.get('from', None) # Agora acessando notifyName dentro de _data
         number = number.split('@')[0]
         url = ''
-        lenq = ''
 
         if message_body is not None:
-            global global_menuVez, global_hermanos, global_fisk
+            global global_menuVez, global_hermanos, global_fisk, global_lang
             response = ''
             saudacoes = [f'Olá {nome_contato}, tudo bem?', f'Oi {nome_contato}, como vai você?', f'Opa {nome_contato}, tudo certo?']
             saudacao = random.choice(saudacoes)
@@ -97,36 +97,42 @@ def rabbitmq_consumer():
             elif message_body != None and message_body == '\humano':
                 response = 'Aguarde um momento, o humano virá lhe responder.'
             elif message_body != None and message_body == '\pix':
-                print('entrei no pix')
                 response = 'Obrigado por ajudar o projeto, segue dados do pix: ifbadavi@gmail.com. Todo valor depositado será convertido em café para os devs envolvidos.'
                 url='https://user-images.githubusercontent.com/73002604/282550215-f7b3b8a1-5d6c-4401-a485-5047151b7fde.png'
             elif message_body != None and message_body == '\\nota':
                 pass
             elif message_body != None and message_body == '\empresa':
-                pass
+                response = 'Entraremos em contato com você o mais breve possível. Caso queira falar conosco de forma mais rápida por favor clique neste link -> https://api.whatsapp.com/send?phone=5521998052438'
             elif message_body != None and message_body == '\\fisk':
                 global_fisk = True
                 global_hermanos = False
-                lenq = 'en'
+                global_lang = 'en'
                 response = 'Olá mundo!'
             elif message_body != None and message_body == '\hermanos':
                 global_hermanos = True
                 global_fisk = False
-                lenq = 'es'
+                global_lang = 'es'
+                response = 'Olá mundo!'
+            elif message_body != None and message_body == '\\brasileiro':
+                global_hermanos = False
+                global_fisk = False
                 response = 'Olá mundo!'
             elif message_body != None and message_body == '\sair':
-                if((global_hermanos or global_fisk) and url == ''):
-                    translator = GoogleTranslator(source='pt', target=lenq).translate(text=response)
-                    response = translator.translate(response)
-                send_to_node(number, response, url)
                 exit()
             elif message_body != None and message_body != '':
-               response = f'{saudacao} Esse é um atendimento automático, e não é monitorado por um humano 🤖. Caso queira falar com um atendente, escolha a opção \humano. \r\n\r\nEscolha uma das opções abaixo para iniciarmos a nossa conversa: \r\n\r\n*[ \pergunta ]* - Quero fazer uma pergunta ao bot. 🙋🏻‍♂️ \r\n*[ \imagem ]* - Gera uma imagem com seus parâmetros. 📷 \r\n*[ \sobre ]* - Quero saber mais sobre este projeto. 👨🏻‍💻 \r\n*[ \humano ]* - Gostaria de falar com o Davizinho 🤏🤴. \r\n*[ \pix ]* - Quero contribuir com o lanche da tarde dos crias.🌭 🍔   \r\n*[ \\nota ]* - Quero atribuir uma nota a este serviço. 👍🏻 👎🏻\r\n*[ \empresa ]* - Gostaria de desenvolver o meu bot empresarial. 📲 \r\n*[ \\fisk ]* - In *ENGLISH* please!☕️ \r\n*[ \hermanos ]* - En *ESPAÑOL* por favor. 🌮'
+                if global_fisk:
+                    response = f'This is an automatic service, and is not monitored by a human 🤖. If you want to speak to an attendant, choose the \human option. \r\n\r\nChoose one of the options below to start our conversation: \r\n\r\n*[ \pergunta ]* - I want to ask the bot a question. 🙋🏻‍♂️ \r\n*[ \imagem ]* - Generates an image with your parameters. 📷 \r\n*[ \\sobre ]* - I want to know more about this project. 👨🏻‍💻 \r\n*[ \humano ]* - I would like to speak to Davizinho 🤴. \r\n*[ \pix ]* - I want to contribute to the cubs\' afternoon snack.🌭 🍔 \r\n*[ \\nota ]* - I want to receive a note for this service. 👍🏻 👎🏻\r\n*[ \empresa ]* - I would like to develop my business bot. 📲 \r\n*[ \\fisk ]* - In *ENGLISH* please!☕️ \r\n*[ \hermanos ]* - In *ESPAÑOL* please. 🌮 \r\n*[ \\brasileiro ]* - In *BRASILIAN* please.'
+                    message_body = ''
+                elif global_hermanos:
+                    response = f'Este es un servicio automático y no está monitoreado por un humano 🤖. Si desea hablar con un asistente, elija la opción \human. \r\n\r\nElija una de las siguientes opciones para iniciar nuestra conversación: \r\n\r\n*[ \pergunta ]* - Quiero hacerle una pregunta al bot. 🙋🏻‍♂️ \r\n*[ \imagem ]* - Genera una imagen con tus parámetros. 📷 \r\n*[ \\sobre ]* - Quiero saber más sobre este proyecto. 👨🏻‍💻 \r\n*[ \humano ]* - Me gustaría hablar con Davizinho 🤴. \r\n*[ \pix ]* - Quiero contribuir a la merienda de los cachorros.🌭 🍔 \r\n*[ \\nota ]* - Quiero recibir una nota por este servicio. 👍🏻 👎🏻\r\n*[ \empresa ]* - Me gustaría desarrollar mi robot empresarial. 📲 \r\n*[ \\fisk ]* - ¡En *INGLÉS* por favor!☕️ \r\n*[ \hermanos ]* - En *ESPAÑOL* por favor. 🌮 \r\n*[ \\brasileiro ]* - En *BRASILEIRO* por favor.'
+                    message_body = ''
+                else:
+                    response = f'{saudacao} Esse é um atendimento automático, e não é monitorado por um humano 🤖. Caso queira falar com um atendente, escolha a opção \humano. \r\n\r\nEscolha uma das opções abaixo para iniciarmos a nossa conversa: \r\n\r\n*[ \pergunta ]* - Quero fazer uma pergunta ao bot. 🙋🏻‍♂️ \r\n*[ \imagem ]* - Gera uma imagem com seus parâmetros. 📷 \r\n*[ \sobre ]* - Quero saber mais sobre este projeto. 👨🏻‍💻 \r\n*[ \humano ]* - Gostaria de falar com o Davizinho 🤏🤴. \r\n*[ \pix ]* - Quero contribuir com o lanche da tarde dos crias.🌭 🍔   \r\n*[ \\nota ]* - Quero atribuir uma nota a este serviço. 👍🏻 👎🏻\r\n*[ \empresa ]* - Gostaria de desenvolver o meu bot empresarial. 📲 \r\n*[ \\fisk ]* - In *ENGLISH* please!☕️ \r\n*[ \hermanos ]* - En *ESPAÑOL* por favor. 🌮 \r\n*[ \\brasileiro ]* - EM *BRASILEIRO* por favor.'
             
             if response != '' and number != '':
-                if((global_hermanos or global_fisk) and url == ''):
-                    translator = GoogleTranslator(source='pt', target=lenq).translate(text=response)
-                    response = translator.translate(response)
+                if((global_hermanos or global_fisk) and url == '' and message_body != ''):
+                    translator = GoogleTranslator(source='pt', target=global_lang)
+                    response = translator.translate(text=response)
                 send_to_node(number, response, url)
         else:
             print("A chave 'body' não existe na mensagem recebida")
