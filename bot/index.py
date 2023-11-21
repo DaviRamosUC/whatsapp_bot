@@ -10,6 +10,16 @@ import random
 import threading
 import pika
 import json
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+# Use um arquivo de credenciais baixado do console do Firebase
+cred = credentials.Certificate('./credentials.json')
+firebase_admin.initialize_app(cred)
+
+# Inicializar o cliente Firestore
+db = firestore.client()
 
 app = Flask(__name__)
 
@@ -78,7 +88,8 @@ def rabbitmq_consumer():
             saudacoes = [f'Olá {nome_contato}, tudo bem?', f'Oi {nome_contato}, como vai você?', f'Opa {nome_contato}, tudo certo?']
             saudacao = random.choice(saudacoes)
             if (message_body != None and message_body == '\pergunta') or global_menuVez == '\pergunta':
-                if global_menuVez == '\pergunta': 
+                if global_menuVez == '\pergunta':
+                    send_to_node(number, 'A resposta está sendo gerado pela IA, aguarde alguns minutos...', url) 
                     response = chat(message_body)
                     global_menuVez = ''
                 else:
@@ -86,6 +97,7 @@ def rabbitmq_consumer():
                     global_menuVez = '\pergunta'
             elif message_body != None and message_body == '\imagem' or global_menuVez == '\imagem':
                 if global_menuVez == '\imagem': 
+                    send_to_node(number, 'A imagem está sendo gerado pela IA, aguarde alguns minutos...', url) 
                     url = generateImage(message_body)
                     response = message_body
                     global_menuVez = ''
@@ -93,14 +105,23 @@ def rabbitmq_consumer():
                     response = 'Descreva a imagem que quer gerar: '
                     global_menuVez = '\imagem'
             elif message_body != None and message_body == '\sobre':
-                response = 'Neste projeto, utilizamos o Flask, um micro-framework Python leve e flexível, para construir a API do lado do servidor. Para gerar QR codes, empregamos a biblioteca `qrcode` do Python. A comunicação com o modelo de linguagem GPT-3 da OpenAI é feita através da API da OpenAI, com autenticação gerenciada por variáveis de ambiente armazenadas em um arquivo `.env` para segurança. Além disso, a biblioteca `requests` do Python é usada para realizar chamadas HTTP entre a aplicação Flask e uma API externa Node.js, possibilitando a troca de mensagens.'
+                response = 'Neste projeto, utilizamos o Flask, um micro-framework Python leve e flexível, para construir a API do lado do servidor. Para gerar QR codes, empregamos a biblioteca `qrcode` do Python. A comunicação com o modelo de linguagem GPT-3 da OpenAI é feita através da API da OpenAI, com autenticação gerenciada por variáveis de ambiente armazenadas em um arquivo `.env` para segurança. Além disso, a biblioteca `requests` do Python é usada para realizar chamadas HTTP entre a aplicação Flask e uma API externa Node.js, possibilitando a troca de mensagens. \r\n\r\nPara saber mais visite o repositório do projeto no Github: https://github.com/DaviRamosUC/gmes_refatoracao \r\nE veja o vídeo explicativo da aplicação https://www.loom.com/share/41ca79a0d4b7435db3f5ae8f9c5fbd3b?sid=8a40236e-7b35-486b-9e9f-397d5fb0bbee'
             elif message_body != None and message_body == '\humano':
                 response = 'Aguarde um momento, o humano virá lhe responder.'
             elif message_body != None and message_body == '\pix':
                 response = 'Obrigado por ajudar o projeto, segue dados do pix: ifbadavi@gmail.com. Todo valor depositado será convertido em café para os devs envolvidos.'
                 url='https://user-images.githubusercontent.com/73002604/282550215-f7b3b8a1-5d6c-4401-a485-5047151b7fde.png'
-            elif message_body != None and message_body == '\\nota':
-                pass
+            elif (message_body != None and message_body == '\\nota') or global_menuVez == '\\nota':
+                if global_menuVez == '\\nota':
+                    nota, comentario = message_body.split('-')
+                    if add_comment(comentario, nota, nome_contato):
+                        response = get_comments()
+                        global_menuVez = ''
+                    else:
+                        response = f'A nota: {nota} não está entre 0 e 10,'
+                else:
+                    send_to_node(number, 'Me informe uma nota de 0 a 10 e um comentário para o nosso serviço. \r\n\r\nExemplo de resposta: 10 - Deu muito trabalho pra fazer, obrigado por tudo!!', url) 
+                    global_menuVez = '\\nota'
             elif message_body != None and message_body == '\empresa':
                 response = 'Entraremos em contato com você o mais breve possível. Caso queira falar conosco de forma mais rápida por favor clique neste link -> https://api.whatsapp.com/send?phone=5521998052438'
             elif message_body != None and message_body == '\\fisk':
@@ -136,6 +157,25 @@ def rabbitmq_consumer():
                 send_to_node(number, response, url)
         else:
             print("A chave 'body' não existe na mensagem recebida")
+
+    def add_comment(comment_text, rating, nome):
+        # Verifique se a classificação está entre 0 e 10
+        if not (0 <= int(rating) <= 10):
+            raise "Nota deve ser entre 0 e 10, tente novamente acessando o \\nota"
+
+        # Adicionar comentário ao Firestore
+        comment_data = {
+            'comment': f'{comment_text} - \r\ncomentário adicionado por *{nome}*',
+            'rating': rating
+        }
+        db.collection('comments').add(comment_data)
+        return True
+    
+    def get_comments():
+        comments = db.collection('comments').get()
+        comments_str = "\r\n".join([f"{comment.to_dict()['rating']} - {comment.to_dict()['comment']}" for comment in comments])
+        return comments_str
+
 
     def send_to_node(number, message, url):
         print(number, message, url)

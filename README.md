@@ -1,4 +1,5 @@
 # Whatsapp_bot 🐍🐍
+### Assista ao vídeo de apresentação aqui -> [Apresentação em video](https://www.loom.com/share/41ca79a0d4b7435db3f5ae8f9c5fbd3b?sid=8a40236e-7b35-486b-9e9f-397d5fb0bbee)
 
 Trabalho apresentado ao curso de Engenharia de Software da Universidade de Vassouras, Câmpus Maricá, como parte dos requisitos para formação na matéria de Gestão da Manutenção e Evolução de Software. 
 
@@ -31,7 +32,13 @@ Para rodar o projeto, siga estas etapas:
    No diretório do projeto (onde o arquivo `docker-compose.yml` está localizado), execute o seguinte comando:
 
    ```bash
-   docker-compose up -d
+   cd microservice
+   npm i
+   cd .. && cd bot
+   souce venv/bin/activate
+   pip install -r requirements.txt
+   cd ..
+   docker-compose up --build -d
    ```
 
    Isso irá baixar e iniciar todos os serviços definidos no  `docker-compose.yml`.
